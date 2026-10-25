@@ -1,6 +1,6 @@
 package br.pucpr.table;
 
-import br.pucpr.user.Theme;
+import br.pucpr.table.model.TableData;
 import java.util.function.IntFunction;
 
 public class Table {

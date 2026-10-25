@@ -1,4 +1,4 @@
-package br.pucpr.table;
+package br.pucpr.table.model;
 
 public interface TableData {
   int getColumnCount();
