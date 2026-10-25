@@ -6,10 +6,13 @@ import static br.pucpr.planet.PlanetType.ICE;
 import static br.pucpr.table.Theme.LIGHT;
 
 import br.pucpr.planet.Planet;
+import br.pucpr.planet.PlanetaColumns;
 import br.pucpr.planet.PlanetsTableData;
 import br.pucpr.table.Table;
+import br.pucpr.table.TableBuilder;
 import br.pucpr.table.Theme;
 import br.pucpr.table.model.ColumnTableData;
+import br.pucpr.table.paging.PagedTableData;
 import br.pucpr.user.CpfColumn;
 import br.pucpr.user.EmailColumn;
 import br.pucpr.user.IdColumn;
@@ -50,5 +53,40 @@ public class Main {
     System.out.println("IMPRIMINDO PLANETAS");
     System.out.println("-------------------");
     new Table().print(new PlanetsTableData(planetas), false, Theme.NORMAL);
+
+    System.out.println();
+    System.out.println("PLANETAS REFLETIDOS");
+    System.out.println("-------------------");
+
+    new TableBuilder()
+        .light()
+        .rightAligned()
+        .withData(
+            planetas,
+            c ->
+                c.add(PlanetaColumns.values())
+                    .add(
+                        "Distance (au)",
+                        p -> "%,11.2f".formatted(Planet.kmToAu(p.sunDistanceKm()))))
+        .print();
+
+    System.out.println();
+    System.out.println("USUARIOS PAGINADOS");
+    System.out.println("------------------");
+    final var pagedUsers = new PagedTableData(usersData, 4);
+    do {
+      System.out.printf("Página %d de %d%n", pagedUsers.getPage(), pagedUsers.getPageCount());
+      new Table().print(pagedUsers, true, LIGHT);
+    } while (pagedUsers.nextPage());
+
+    System.out.println();
+    System.out.println("PLANETAS PAGINADOS (página 2, 3 por página)");
+    System.out.println("-------------------------------------------");
+    new Table().print(new PagedTableData(new PlanetsTableData(planetas), 3, 2), false, Theme.DARK);
+
+    System.out.println();
+    System.out.println("PLANETAS REFLETIDOS PAGINADOS (página 3, 4 por página)");
+    System.out.println("------------------------------------------------------");
+    new TableBuilder().paged(4, 3).withData(planetas, c -> c.add(PlanetaColumns.values())).print();
   }
 }
