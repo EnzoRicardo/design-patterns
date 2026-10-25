@@ -1,11 +1,15 @@
 package br.pucpr.table.paging;
 
 import br.pucpr.table.model.TableData;
+import br.pucpr.table.observer.ObservableTableData;
+import br.pucpr.table.observer.TableDataListener;
+import br.pucpr.table.observer.TableDataNotifier;
 
 /** Decorator que exibe apenas uma página das linhas de qualquer TableData. */
-public final class PagedTableData implements TableData {
+public final class PagedTableData implements ObservableTableData {
   private final TableData data;
   private final int pageSize;
+  private final TableDataNotifier notifier = new TableDataNotifier();
   private int page;
 
   public PagedTableData(TableData data, int pageSize) {
@@ -18,7 +22,10 @@ public final class PagedTableData implements TableData {
     }
     this.data = data;
     this.pageSize = pageSize;
-    setPage(page);
+    this.page = validPage(page);
+    if (data instanceof ObservableTableData observable) {
+      observable.addListener(this::sourceChanged);
+    }
   }
 
   public int getPage() {
@@ -26,11 +33,24 @@ public final class PagedTableData implements TableData {
   }
 
   public void setPage(int page) {
+    final var newPage = validPage(page);
+    if (newPage != this.page) {
+      this.page = newPage;
+      notifier.fire(this);
+    }
+  }
+
+  private int validPage(int page) {
     if (page < 1 || page > getPageCount()) {
       throw new IllegalArgumentException(
           "Página %d inválida, deve estar entre 1 e %d.".formatted(page, getPageCount()));
     }
-    this.page = page;
+    return page;
+  }
+
+  private void sourceChanged(TableData source) {
+    page = Math.min(page, getPageCount());
+    notifier.fire(this);
   }
 
   public int getPageSize() {
@@ -46,6 +66,7 @@ public final class PagedTableData implements TableData {
       return false;
     }
     page++;
+    notifier.fire(this);
     return true;
   }
 
@@ -54,7 +75,18 @@ public final class PagedTableData implements TableData {
       return false;
     }
     page--;
+    notifier.fire(this);
     return true;
+  }
+
+  @Override
+  public void addListener(TableDataListener listener) {
+    notifier.add(listener);
+  }
+
+  @Override
+  public void removeListener(TableDataListener listener) {
+    notifier.remove(listener);
   }
 
   private int firstRow() {

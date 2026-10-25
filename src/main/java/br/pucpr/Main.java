@@ -12,6 +12,8 @@ import br.pucpr.table.Table;
 import br.pucpr.table.TableBuilder;
 import br.pucpr.table.Theme;
 import br.pucpr.table.model.ColumnTableData;
+import br.pucpr.table.observer.RowCountLabel;
+import br.pucpr.table.observer.TableView;
 import br.pucpr.table.paging.PagedTableData;
 import br.pucpr.user.CpfColumn;
 import br.pucpr.user.EmailColumn;
@@ -88,5 +90,36 @@ public class Main {
     System.out.println("PLANETAS REFLETIDOS PAGINADOS (página 3, 4 por página)");
     System.out.println("------------------------------------------------------");
     new TableBuilder().paged(4, 3).withData(planetas, c -> c.add(PlanetaColumns.values())).print();
+
+    System.out.println();
+    System.out.println("OBSERVER: COMPONENTES AVISADOS A CADA MUDANÇA");
+    System.out.println("---------------------------------------------");
+    final var observedUsers =
+        new ColumnTableData<User>(
+            usuarios.subList(0, 3),
+            new IdColumn(),
+            new NameColumn(),
+            new EmailColumn(),
+            new CpfColumn(true));
+    final var view = new TableView(false, Theme.NORMAL);
+    observedUsers.addListener(view);
+    observedUsers.addListener(new RowCountLabel("Usuários"));
+    view.show(observedUsers);
+
+    System.out.println("> Adicionando o usuário 107");
+    observedUsers.add(new User(107L, "Fernanda Lima", "fernanda@email.com", "99988877766"));
+    System.out.println("> Removendo o primeiro usuário");
+    observedUsers.remove(0);
+
+    System.out.println();
+    System.out.println("> Tabela paginada (2 por página) observando os mesmos dados");
+    final var pagedObserved = new PagedTableData(observedUsers, 2);
+    pagedObserved.addListener(
+        source ->
+            System.out.printf(
+                "Página %d de %d%n", pagedObserved.getPage(), pagedObserved.getPageCount()));
+    pagedObserved.addListener(new TableView(true, Theme.DARK));
+    System.out.println("> Indo para a próxima página");
+    pagedObserved.nextPage();
   }
 }
